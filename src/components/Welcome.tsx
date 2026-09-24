@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { UserProfile } from '../lib/store'
 import { levelFor } from '../lib/progress'
+import { WaitlistForm } from './WaitlistForm'
 
 export function Welcome({
   users,
@@ -62,6 +63,8 @@ export function Welcome({
           </div>
         </div>
       )}
+
+      <WaitlistForm source="welcome" title="Not ready to start? Get notified as we build this out" />
     </div>
   )
 }

@@ -21,7 +21,7 @@ export function CheckInFlow({
   const [stage, setStage] = useState<Stage>('record')
   const [transcript, setTranscript] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<{ checkIn: CheckIn; xp: XpBreakdown | null } | null>(null)
+  const [result, setResult] = useState<{ checkIn: CheckIn; xp: XpBreakdown | null; isFirstEver: boolean } | null>(null)
 
   async function handleGenerate() {
     setStage('generating')
@@ -31,9 +31,10 @@ export function CheckInFlow({
         profile: { name: profile.name, dossier: profile.dossier || undefined },
         previousMissions: openMissions(profile),
       })
+      const isFirstEver = profile.checkIns.length === 0
       const outcome = recordCheckIn(profile, transcript, verdicts, missionResults)
       onCommit(outcome.profile)
-      setResult({ checkIn: outcome.checkIn, xp: outcome.xp })
+      setResult({ checkIn: outcome.checkIn, xp: outcome.xp, isFirstEver })
       setStage('results')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong generating your verdict.')
@@ -102,6 +103,7 @@ export function CheckInFlow({
           elevenLabsConfigured={elevenLabsConfigured}
           missionResults={result.checkIn.missionResults}
           rewards={{ xp: result.xp, newStickers: result.checkIn.newStickers, replay: result.checkIn.replay }}
+          showWaitlist={result.isFirstEver}
           onStartOver={onExit}
           startOverLabel="Back home"
         />

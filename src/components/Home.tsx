@@ -6,6 +6,7 @@ import { PersonalityPicker } from './PersonalityPicker'
 import { ThemePicker } from './ThemePicker'
 import { XpBar } from './XpBar'
 import { Sticker } from './stickers/art'
+import { WaitlistForm } from './WaitlistForm'
 
 export type HomeView = 'home' | 'progress' | 'stickers'
 
@@ -147,6 +148,8 @@ export function Home({
           </div>
         )}
       </div>
+
+      <WaitlistForm source="home" title="Get notified about new features" compact />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import type {
   ProfileContext,
   RoastSession,
   Verdict,
+  WaitlistSource,
 } from '../../shared/domain'
 
 export async function fetchConfig(): Promise<{ elevenLabsConfigured: boolean }> {
@@ -90,4 +91,16 @@ export async function getSession(id: string): Promise<RoastSession | null> {
   if (!res.ok) return null
   const data = (await res.json()) as { found: boolean; session: RoastSession | null }
   return data.found ? data.session : null
+}
+
+export async function joinWaitlist(name: string, email: string, source: WaitlistSource): Promise<void> {
+  const res = await fetch('/api/waitlist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, source }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? 'Could not join the list.')
+  }
 }

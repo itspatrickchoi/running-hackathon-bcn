@@ -117,3 +117,6 @@ export interface RoastSession {
   transcript: string
   verdicts: Verdict[]
 }
+
+// Where a waitlist signup was submitted from, so we can see which spot converts.
+export type WaitlistSource = 'welcome' | 'home' | 'post-checkin'
