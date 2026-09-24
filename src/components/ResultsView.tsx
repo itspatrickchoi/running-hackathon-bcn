@@ -3,6 +3,7 @@ import { CATEGORIES, type MissionResult, type RoastSession } from '../../shared/
 import type { XpBreakdown } from '../lib/progress'
 import { RewardsPanel } from './RewardsPanel'
 import { VerdictCard } from './VerdictCard'
+import { WaitlistForm } from './WaitlistForm'
 import { saveSession } from '../lib/api'
 
 export function ResultsView({
@@ -13,6 +14,7 @@ export function ResultsView({
   readOnly = false,
   missionResults = [],
   rewards,
+  showWaitlist = false,
 }: {
   session: RoastSession
   elevenLabsConfigured: boolean
@@ -21,6 +23,8 @@ export function ResultsView({
   readOnly?: boolean
   missionResults?: MissionResult[]
   rewards?: { xp: XpBreakdown | null; newStickers: string[]; replay: boolean }
+  /** Shown once, right after someone's very first check-in. */
+  showWaitlist?: boolean
 }) {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
@@ -52,6 +56,10 @@ export function ResultsView({
       </div>
 
       {rewards && <RewardsPanel xp={rewards.xp} newStickers={rewards.newStickers} replay={rewards.replay} />}
+
+      {showWaitlist && (
+        <WaitlistForm source="post-checkin" title="Like this? Get notified as we build this out" />
+      )}
 
       {missionResults.length > 0 && (
         <div className="card missions-card">

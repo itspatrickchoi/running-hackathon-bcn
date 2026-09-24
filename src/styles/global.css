@@ -772,6 +772,42 @@ a {
   padding-top: 18px;
 }
 
+/* ---------- Waitlist ---------- */
+
+.waitlist-card {
+  background: var(--bg-well);
+}
+
+.waitlist-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.waitlist-row .text-input {
+  flex: 1 1 140px;
+}
+
+.waitlist-form.compact {
+  border-top: 1.5px dashed currentColor;
+  padding-top: 18px;
+  margin-top: 8px;
+}
+
+.waitlist-form.compact .text-input {
+  padding: 10px 14px;
+  font-size: var(--text-sm);
+}
+
+.waitlist-joined {
+  font-weight: 600;
+}
+
+.waitlist-error {
+  color: var(--savage);
+  margin-top: 8px;
+}
+
 /* ---------- Record ---------- */
 
 .record-card {
