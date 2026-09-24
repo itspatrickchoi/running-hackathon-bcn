@@ -46,7 +46,11 @@ export default async (req: Request) => {
   try {
     message = await anthropic.messages.create({
       model: 'claude-sonnet-5',
-      max_tokens: 1536,
+      max_tokens: 4096,
+      // Sonnet 5 runs adaptive thinking by default, and thinking tokens count
+      // against max_tokens — the forced tool call was getting cut off mid-output.
+      // This is a single forced tool call, so thinking isn't needed.
+      thinking: { type: 'disabled' },
       system:
         'You classify a spoken daily recap into a fixed set of life categories, then write a short in-character verdict for each category that is actually present in the transcript. Only include a category if the person actually talked about something in it — never invent content. Ground every verdict in something the person specifically said.',
       messages: [
@@ -92,15 +96,25 @@ export default async (req: Request) => {
     return Response.json({ error: 'The AI classifier failed to respond. Please try again.' }, { status: 502 })
   }
 
+  if (message.stop_reason === 'max_tokens') {
+    console.error('Anthropic response was truncated at max_tokens', message.usage)
+    return Response.json({ error: 'The verdict was cut off. Please try a shorter recap.' }, { status: 502 })
+  }
+
   const toolUse = message.content.find((block) => block.type === 'tool_use')
   if (!toolUse || toolUse.type !== 'tool_use') {
+    console.error('No tool_use block in response', message.stop_reason, message.content)
     return Response.json({ error: 'Model did not return a verdict.' }, { status: 502 })
   }
 
-  const raw = toolUse.input as { verdicts: Array<{ category: CategoryId; excerpt: string; verdict: string }> }
+  const raw = toolUse.input as { verdicts?: Array<{ category: CategoryId; excerpt: string; verdict: string }> }
+  if (!Array.isArray(raw?.verdicts)) {
+    console.error('Malformed tool input', toolUse.input)
+    return Response.json({ error: 'Model did not return a verdict.' }, { status: 502 })
+  }
 
   const verdicts: Verdict[] = raw.verdicts
-    .filter((v) => CATEGORY_IDS.includes(v.category))
+    .filter((v) => v && CATEGORY_IDS.includes(v.category) && v.verdict)
     .map((v) => ({
       category: v.category,
       personality: assignments[v.category],
