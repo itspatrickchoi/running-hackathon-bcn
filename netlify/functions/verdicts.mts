@@ -10,10 +10,17 @@ import {
   type ProfileContext,
   type Verdict,
 } from '../../shared/domain'
+import { checkRateLimit, clientIp, rateLimitedResponse } from '../../shared/rateLimit'
 
 const CATEGORY_IDS = CATEGORIES.map((c) => c.id)
+// Generous for real daily use (retries, "roast me again" replays), tight
+// enough to cap a scripted abuser's Anthropic spend from one IP.
+const DAILY_LIMIT = 12
 
 export default async (req: Request) => {
+  const { allowed } = await checkRateLimit('verdicts', clientIp(req), DAILY_LIMIT)
+  if (!allowed) return rateLimitedResponse()
+
   if (!Netlify.env.has('ANTHROPIC_API_KEY')) {
     console.error(
       'ANTHROPIC_API_KEY is not available at runtime. Enable AI Gateway ("Build with AI") for this project, or add an ANTHROPIC_API_KEY environment variable.',

@@ -1,10 +1,15 @@
 import type { Config } from '@netlify/functions'
 import { PERSONALITIES, type PersonalityId } from '../../shared/domain'
+import { checkRateLimit, clientIp, rateLimitedResponse } from '../../shared/rateLimit'
 
 const elevenLabsTtsUrl = (voiceId: string) =>
   `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`
+const DAILY_LIMIT = 20
 
 export default async (req: Request) => {
+  const { allowed } = await checkRateLimit('speak', clientIp(req), DAILY_LIMIT)
+  if (!allowed) return rateLimitedResponse()
+
   const apiKey = Netlify.env.get('Elevenlabs')
   if (!apiKey) {
     return Response.json(
