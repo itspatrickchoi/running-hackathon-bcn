@@ -1,8 +1,13 @@
 import type { Config } from '@netlify/functions'
+import { checkRateLimit, clientIp, rateLimitedResponse } from '../../shared/rateLimit'
 
 const ELEVENLABS_STT_URL = 'https://api.elevenlabs.io/v1/speech-to-text'
+const DAILY_LIMIT = 20
 
 export default async (req: Request) => {
+  const { allowed } = await checkRateLimit('transcribe', clientIp(req), DAILY_LIMIT)
+  if (!allowed) return rateLimitedResponse()
+
   const apiKey = Netlify.env.get('Elevenlabs')
   if (!apiKey) {
     return Response.json(

@@ -1,8 +1,15 @@
 import type { Config } from '@netlify/functions'
 import Anthropic from '@anthropic-ai/sdk'
 import type { OnboardingAnswer, OnboardResult } from '../../shared/domain'
+import { checkRateLimit, clientIp, rateLimitedResponse } from '../../shared/rateLimit'
+
+// One onboarding per person is the normal case; a few extra for redo-onboarding.
+const DAILY_LIMIT = 6
 
 export default async (req: Request) => {
+  const { allowed } = await checkRateLimit('onboard', clientIp(req), DAILY_LIMIT)
+  if (!allowed) return rateLimitedResponse()
+
   if (!Netlify.env.has('ANTHROPIC_API_KEY')) {
     console.error(
       'ANTHROPIC_API_KEY is not available at runtime. Enable AI Gateway ("Build with AI") for this project, or add an ANTHROPIC_API_KEY environment variable.',
