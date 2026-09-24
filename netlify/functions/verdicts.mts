@@ -4,7 +4,10 @@ import {
   CATEGORIES,
   PERSONALITIES,
   type CategoryId,
+  type Mission,
+  type MissionResult,
   type PersonalityId,
+  type ProfileContext,
   type Verdict,
 } from '../../shared/domain'
 
@@ -24,9 +27,11 @@ export default async (req: Request) => {
     )
   }
 
-  const { transcript, assignments } = (await req.json()) as {
+  const { transcript, assignments, profile, previousMissions } = (await req.json()) as {
     transcript?: string
     assignments?: Record<CategoryId, PersonalityId>
+    profile?: ProfileContext
+    previousMissions?: Mission[]
   }
 
   if (!transcript || transcript.trim().length < 8) {
@@ -41,6 +46,16 @@ export default async (req: Request) => {
     return `- id "${c.id}" (${c.label}, covers: ${c.hint}) → voiced by ${personality.label}: ${personality.systemPrompt}`
   }).join('\n')
 
+  const missions = (previousMissions ?? []).filter((m) => CATEGORY_IDS.includes(m.category) && m.mission)
+
+  const profileBrief = profile?.name
+    ? `\n\nWho you're talking to: ${profile.name}.${profile.dossier ? ` What you know about them:\n${profile.dossier}` : ''}\nUse what you know to make verdicts personal (their goals, habits, what motivates them) — but only where it connects to what they said today.`
+    : ''
+
+  const missionBrief = missions.length
+    ? `\n\nYesterday's missions they were given:\n${missions.map((m) => `- ${m.category}: ${m.mission}`).join('\n')}\nFor each of these, judge from today's transcript whether they did it. If the transcript doesn't mention it, it counts as not completed.`
+    : ''
+
   const anthropic = new Anthropic()
   let message
   try {
@@ -52,11 +67,11 @@ export default async (req: Request) => {
       // This is a single forced tool call, so thinking isn't needed.
       thinking: { type: 'disabled' },
       system:
-        'You classify a spoken daily recap into a fixed set of life categories, then write a short in-character verdict for each category that is actually present in the transcript. Only include a category if the person actually talked about something in it — never invent content. Ground every verdict in something the person specifically said.',
+        'You classify a spoken daily recap into a fixed set of life categories, then write a short in-character verdict for each category that is actually present in the transcript. Only include a category if the person actually talked about something in it — never invent content. Ground every verdict in something the person specifically said. Each verdict also gets an honest 1–10 score for how the day went in that category, and one small, concrete mission for tomorrow, written in the same personality voice.',
       messages: [
         {
           role: 'user',
-          content: `Here are the only categories allowed, each with the personality that must voice its verdict:\n${categoryBriefs}\n\nTranscript of the person's spoken day recap:\n"""\n${transcript}\n"""\n\nUse the submit_verdicts tool to respond.`,
+          content: `Here are the only categories allowed, each with the personality that must voice its verdict:\n${categoryBriefs}${profileBrief}${missionBrief}\n\nTranscript of the person's spoken day recap:\n"""\n${transcript}\n"""\n\nUse the submit_verdicts tool to respond.`,
         },
       ],
       tools: [
@@ -80,12 +95,39 @@ export default async (req: Request) => {
                       type: 'string',
                       description: "The personality's in-character verdict, 2 to 4 sentences.",
                     },
+                    score: {
+                      type: 'integer',
+                      minimum: 1,
+                      maximum: 10,
+                      description: 'How the day went in this category, 1 (disaster) to 10 (perfect).',
+                    },
+                    mission: {
+                      type: 'string',
+                      description:
+                        "One small, concrete, doable-tomorrow mission for this category, under 15 words, in the personality's voice.",
+                    },
                   },
-                  required: ['category', 'excerpt', 'verdict'],
+                  required: ['category', 'excerpt', 'verdict', 'score', 'mission'],
+                },
+              },
+              missionResults: {
+                type: 'array',
+                description: "One entry per mission from yesterday. Empty if there were none.",
+                items: {
+                  type: 'object',
+                  properties: {
+                    category: { type: 'string', enum: CATEGORY_IDS },
+                    completed: { type: 'boolean' },
+                    note: {
+                      type: 'string',
+                      description: 'One short, in-character sentence about whether they did it.',
+                    },
+                  },
+                  required: ['category', 'completed', 'note'],
                 },
               },
             },
-            required: ['verdicts'],
+            required: ['verdicts', 'missionResults'],
           },
         },
       ],
@@ -107,7 +149,10 @@ export default async (req: Request) => {
     return Response.json({ error: 'Model did not return a verdict.' }, { status: 502 })
   }
 
-  const raw = toolUse.input as { verdicts?: Array<{ category: CategoryId; excerpt: string; verdict: string }> }
+  const raw = toolUse.input as {
+    verdicts?: Array<{ category: CategoryId; excerpt: string; verdict: string; score?: number; mission?: string }>
+    missionResults?: MissionResult[]
+  }
   if (!Array.isArray(raw?.verdicts)) {
     console.error('Malformed tool input', toolUse.input)
     return Response.json({ error: 'Model did not return a verdict.' }, { status: 502 })
@@ -120,9 +165,16 @@ export default async (req: Request) => {
       personality: assignments[v.category],
       excerpt: v.excerpt,
       verdict: v.verdict,
+      score: typeof v.score === 'number' ? Math.min(10, Math.max(1, Math.round(v.score))) : undefined,
+      mission: v.mission || undefined,
     }))
 
-  return Response.json({ verdicts })
+  const missionCategories = new Set(missions.map((m) => m.category))
+  const missionResults: MissionResult[] = (Array.isArray(raw.missionResults) ? raw.missionResults : [])
+    .filter((r) => r && missionCategories.has(r.category))
+    .map((r) => ({ category: r.category, completed: Boolean(r.completed), note: r.note ?? '' }))
+
+  return Response.json({ verdicts, missionResults })
 }
 
 export const config: Config = {

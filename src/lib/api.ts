@@ -1,4 +1,14 @@
-import type { CategoryId, PersonalityId, RoastSession, Verdict } from '../../shared/domain'
+import type {
+  CategoryId,
+  Mission,
+  MissionResult,
+  OnboardingAnswer,
+  OnboardResult,
+  PersonalityId,
+  ProfileContext,
+  RoastSession,
+  Verdict,
+} from '../../shared/domain'
 
 export async function fetchConfig(): Promise<{ elevenLabsConfigured: boolean }> {
   const res = await fetch('/api/config')
@@ -21,18 +31,32 @@ export async function transcribeAudio(blob: Blob): Promise<string> {
 export async function generateVerdicts(
   transcript: string,
   assignments: Record<CategoryId, PersonalityId>,
-): Promise<Verdict[]> {
+  extras: { profile?: ProfileContext; previousMissions?: Mission[] } = {},
+): Promise<{ verdicts: Verdict[]; missionResults: MissionResult[] }> {
   const res = await fetch('/api/verdicts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ transcript, assignments }),
+    body: JSON.stringify({ transcript, assignments, ...extras }),
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error(body.error ?? 'Could not generate verdicts.')
   }
-  const data = (await res.json()) as { verdicts: Verdict[] }
-  return data.verdicts
+  const data = (await res.json()) as { verdicts: Verdict[]; missionResults?: MissionResult[] }
+  return { verdicts: data.verdicts, missionResults: data.missionResults ?? [] }
+}
+
+export async function onboardUser(name: string, answers: OnboardingAnswer[]): Promise<OnboardResult> {
+  const res = await fetch('/api/onboard', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, answers }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? 'Could not build your profile.')
+  }
+  return res.json()
 }
 
 export async function fetchSpokenVerdict(text: string, personality: PersonalityId): Promise<Blob> {

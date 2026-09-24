@@ -1,0 +1,111 @@
+/* Four personal themes over one Y2K-editorial base. Everything visual reads
+   from these tokens, so a theme is just a block of overrides. */
+
+:root,
+[data-theme='clean'] {
+  --bg: #f6f3ec;
+  --bg-raised: #fffdf8;
+  --bg-well: #efebe2;
+  --ink: #16151a;
+  --ink-muted: #6b6a70;
+  --border: #16151a;
+  --hairline: #dcd7cc;
+  --accent: #d6432b;
+  --accent-2: #2f5bea;
+  --on-ink: #fffdf8;
+  --shadow: #16151a;
+  --s1: #d6432b;
+  --s2: #2f5bea;
+  --s3: #f4c542;
+  --sticker-ink: #16151a;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  --display-weight: 600;
+  --display-style: italic;
+  --display-case: none;
+  --radius: 6px;
+  --pattern: radial-gradient(circle at 1px 1px, rgba(22, 21, 26, 0.08) 1px, transparent 0) 0 0 / 22px 22px;
+}
+
+[data-theme='bubblegum'] {
+  --bg: #ffe6f2;
+  --bg-raised: #fff7fb;
+  --bg-well: #ffd6ea;
+  --ink: #3b0a45;
+  --ink-muted: #8a4f86;
+  --border: #3b0a45;
+  --hairline: #f3b6d6;
+  --accent: #ff3ea5;
+  --accent-2: #9b6bff;
+  --on-ink: #fff7fb;
+  --shadow: #9b6bff;
+  --s1: #ff3ea5;
+  --s2: #b8a4ff;
+  --s3: #fff06b;
+  --sticker-ink: #3b0a45;
+  --font-display: 'Bagel Fat One', 'Fraunces', serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --display-weight: 400;
+  --display-style: normal;
+  --font-quote: var(--font-body);
+  --radius: 22px;
+  --pattern:
+    radial-gradient(circle at 20% 30%, rgba(255, 62, 165, 0.14) 0 2px, transparent 3px) 0 0 / 38px 38px,
+    radial-gradient(circle at 70% 80%, rgba(155, 107, 255, 0.16) 0 2px, transparent 3px) 0 0 / 52px 52px;
+}
+
+[data-theme='arcade'] {
+  --bg: #0f1bff;
+  --bg-raised: #ffffff;
+  --bg-well: #e9ecff;
+  --ink: #0a0a0a;
+  --ink-muted: #3a3f66;
+  --border: #0a0a0a;
+  --hairline: #c9cff5;
+  --accent: #ff4d00;
+  --accent-2: #c6ff00;
+  --on-ink: #c6ff00;
+  --shadow: #0a0a0a;
+  --s1: #ff4d00;
+  --s2: #0f1bff;
+  --s3: #c6ff00;
+  --sticker-ink: #0a0a0a;
+  --font-display: 'Rubik Mono One', 'Inter', sans-serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --display-weight: 400;
+  --display-style: normal;
+  --display-case: uppercase;
+  --font-quote: var(--font-body);
+  --radius: 0px;
+  --pattern:
+    linear-gradient(rgba(255, 255, 255, 0.07) 2px, transparent 2px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 2px, transparent 2px) 0 0 / 28px 28px;
+  /* Page text sits on the blue background, cards stay white. */
+  --page-ink: #ffffff;
+  --page-ink-muted: #c9cff5;
+}
+
+[data-theme='terminal'] {
+  --bg: #0b0f0c;
+  --bg-raised: #111812;
+  --bg-well: #0b120d;
+  --ink: #b6ffb0;
+  --ink-muted: #5fae63;
+  --border: #39ff6a;
+  --hairline: #1f3a24;
+  --accent: #39ff6a;
+  --accent-2: #ffb000;
+  --on-ink: #0b0f0c;
+  --shadow: #1c7a33;
+  --s1: #39ff6a;
+  --s2: #ffb000;
+  --s3: #7ad7ff;
+  --sticker-ink: #0b0f0c;
+  --font-display: 'VT323', 'Space Mono', monospace;
+  --font-body: 'Space Mono', ui-monospace, monospace;
+  --display-weight: 400;
+  --display-style: normal;
+  --radius: 2px;
+  --pattern: repeating-linear-gradient(0deg, rgba(57, 255, 106, 0.04) 0 1px, transparent 1px 3px);
+}

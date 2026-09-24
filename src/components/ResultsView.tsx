@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import type { RoastSession } from '../../shared/domain'
+import { CATEGORIES, type MissionResult, type RoastSession } from '../../shared/domain'
+import type { XpBreakdown } from '../lib/progress'
+import { RewardsPanel } from './RewardsPanel'
 import { VerdictCard } from './VerdictCard'
 import { saveSession } from '../lib/api'
 
@@ -7,12 +9,18 @@ export function ResultsView({
   session,
   elevenLabsConfigured,
   onStartOver,
+  startOverLabel = 'Start over',
   readOnly = false,
+  missionResults = [],
+  rewards,
 }: {
   session: RoastSession
   elevenLabsConfigured: boolean
   onStartOver?: () => void
+  startOverLabel?: string
   readOnly?: boolean
+  missionResults?: MissionResult[]
+  rewards?: { xp: XpBreakdown | null; newStickers: string[]; replay: boolean }
 }) {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
@@ -34,11 +42,32 @@ export function ResultsView({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="stack">
       <div>
-        <h2 style={{ fontSize: '2rem' }}>Today&rsquo;s Verdict</h2>
+        <p className="kicker">The verdict is in</p>
+        <h2 className="section-title">
+          Today&rsquo;s <em>Verdict</em>
+        </h2>
         <p className="hint">Based on what you actually said, category by category.</p>
       </div>
+
+      {rewards && <RewardsPanel xp={rewards.xp} newStickers={rewards.newStickers} replay={rewards.replay} />}
+
+      {missionResults.length > 0 && (
+        <div className="card missions-card">
+          <p className="field-label">Yesterday&rsquo;s missions</p>
+          <ul className="mission-list">
+            {missionResults.map((m) => (
+              <li key={m.category} className={m.completed ? 'done' : 'missed'}>
+                <span className="mission-cat">
+                  {m.completed ? '✓' : '✗'} {CATEGORIES.find((c) => c.id === m.category)?.label}
+                </span>
+                <span>{m.note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {session.verdicts.length === 0 && (
         <div className="card">
@@ -47,7 +76,7 @@ export function ResultsView({
       )}
 
       {session.verdicts.map((v, i) => (
-        <VerdictCard key={`${v.category}-${i}`} verdict={v} elevenLabsConfigured={elevenLabsConfigured} />
+        <VerdictCard key={`${v.category}-${i}`} verdict={v} elevenLabsConfigured={elevenLabsConfigured} index={i} />
       ))}
 
       {!readOnly && (
@@ -57,7 +86,7 @@ export function ResultsView({
           </button>
           {onStartOver && (
             <button className="pill-button ghost" onClick={onStartOver}>
-              Start over
+              {startOverLabel}
             </button>
           )}
         </div>
