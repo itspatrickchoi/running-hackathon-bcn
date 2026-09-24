@@ -6,9 +6,11 @@ import { speakWithBrowserVoice } from '../lib/speech'
 export function VerdictCard({
   verdict,
   elevenLabsConfigured,
+  index = 0,
 }: {
   verdict: Verdict
   elevenLabsConfigured: boolean
+  index?: number
 }) {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -47,14 +49,28 @@ export function VerdictCard({
   }
 
   return (
-    <div className="card verdict-card" style={{ ['--accent-color' as string]: personality.color }}>
+    <div
+      className={`card verdict-card ${index % 2 ? 'tilt-right' : 'tilt-left'}`}
+      style={{ ['--accent-color' as string]: personality.color }}
+    >
       <div className="verdict-kicker">
         <span className="verdict-label">
           {category?.label} · {personality.label}
         </span>
+        {typeof verdict.score === 'number' && (
+          <span className="score-badge" aria-label={`Score ${verdict.score} out of 10`}>
+            {verdict.score}
+            <small>/10</small>
+          </span>
+        )}
       </div>
       <p className="verdict-excerpt">&ldquo;{verdict.excerpt}&rdquo;</p>
       <p className="verdict-text">{verdict.verdict}</p>
+      {verdict.mission && (
+        <p className="verdict-mission">
+          <span className="mission-tag">Tomorrow&rsquo;s mission</span> {verdict.mission}
+        </p>
+      )}
       <button className="play-button" onClick={play} disabled={playing}>
         <span className="play-glyph">{playing ? '❚❚' : '▶'}</span>
         <span className="play-track">

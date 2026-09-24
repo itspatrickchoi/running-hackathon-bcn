@@ -78,6 +78,37 @@ export interface Verdict {
   personality: PersonalityId
   excerpt: string
   verdict: string
+  // 1–10 rating of how the day went in this category (newer verdicts only).
+  score?: number
+  // One concrete thing to try tomorrow in this category (newer verdicts only).
+  mission?: string
+}
+
+export interface Mission {
+  category: CategoryId
+  mission: string
+}
+
+export interface MissionResult {
+  category: CategoryId
+  completed: boolean
+  note: string
+}
+
+export interface OnboardingAnswer {
+  question: string
+  answer: string
+}
+
+export interface OnboardResult {
+  dossier: string
+  firstImpression: string
+}
+
+// What the verdict endpoint is told about the person, when they have a profile.
+export interface ProfileContext {
+  name: string
+  dossier?: string
 }
 
 export interface RoastSession {
