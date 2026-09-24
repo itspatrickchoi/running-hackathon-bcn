@@ -37,7 +37,7 @@ export default async (req: Request) => {
       // Single forced tool call; see verdicts.mts for why thinking is off.
       thinking: { type: 'disabled' },
       system:
-        'You are building a short private file on a new user of "Roast My Day", an app where AI personalities judge their daily recaps across fitness, work and creative life. From their onboarding answers, write a compact dossier the roasters will read before every verdict, and a playful first-impression roast. Only use what they actually said — never invent facts.',
+        'You are building a short private file on a new user of "Hot Take Diary", an app where AI personalities judge their daily recaps across fitness, work and creative life. From their onboarding answers, write a compact dossier the roasters will read before every verdict, and a playful first-impression roast. Only use what they actually said — never invent facts.',
       messages: [
         {
           role: 'user',

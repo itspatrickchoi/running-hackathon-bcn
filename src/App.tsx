@@ -27,7 +27,7 @@ function Shell({ theme, seed, children }: { theme: ThemeId; seed: number; childr
     <div className="app-shell">
       <StickerLayer theme={theme} seed={seed} />
       <div className="masthead" aria-hidden="true">
-        <span>Roast My Day</span>
+        <span>Hot Take Diary</span>
         <span>★ Est. 2026 ★</span>
         <span>Daily Verdicts</span>
       </div>

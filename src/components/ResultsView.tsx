@@ -102,7 +102,7 @@ export function ResultsView({
       {readOnly && (
         <div className="footer-row">
           <a className="pill-button" href="/">
-            Roast your own day
+            Get your own hot takes
           </a>
         </div>
       )}
