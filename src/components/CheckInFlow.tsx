@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { generateVerdicts } from '../lib/api'
 import { openMissions, recordCheckIn, type XpBreakdown } from '../lib/progress'
-import type { CheckIn, UserProfile } from '../lib/store'
+import { silentBackup, type CheckIn, type UserProfile } from '../lib/store'
 import { RecordStage } from './RecordStage'
 import { ResultsView } from './ResultsView'
 
@@ -36,6 +36,7 @@ export function CheckInFlow({
       onCommit(outcome.profile)
       setResult({ checkIn: outcome.checkIn, xp: outcome.xp, isFirstEver })
       setStage('results')
+      silentBackup(outcome.profile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong generating your verdict.')
       setStage('confirm')

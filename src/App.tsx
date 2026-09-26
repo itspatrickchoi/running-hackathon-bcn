@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { RoastSession } from '../shared/domain'
 import { fetchConfig, getSession } from './lib/api'
 import { unlockNew } from './lib/progress'
-import { useProfiles, type ThemeId } from './lib/store'
+import { silentBackup, useProfiles, type ThemeId } from './lib/store'
 import { CheckInFlow } from './components/CheckInFlow'
 import { Home, type HomeView } from './components/Home'
 import { Onboarding } from './components/Onboarding'
@@ -57,7 +57,7 @@ function SharedResultsPage({ id }: { id: string }) {
 }
 
 function MainApp() {
-  const { current, users, signIn, updateCurrent, signOut, removeUser } = useProfiles()
+  const { current, users, signIn, updateCurrent, adoptProfile, signOut, removeUser } = useProfiles()
   const elevenLabsConfigured = useElevenLabs()
   const [view, setView] = useState<View>('home')
 
@@ -72,6 +72,10 @@ function MainApp() {
           users={users}
           onSignIn={(name) => {
             signIn(name)
+            setView('home')
+          }}
+          onRestore={(profile) => {
+            adoptProfile(profile)
             setView('home')
           }}
         />
@@ -91,10 +95,10 @@ function MainApp() {
           elevenLabsConfigured={elevenLabsConfigured}
           onUpdate={(patch) => updateCurrent(patch)}
           onDone={() => {
-            updateCurrent((p) => {
-              const next = { ...p, onboarded: true }
-              return { ...next, stickers: [...next.stickers, ...unlockNew(next)] }
-            })
+            const onboardedProfile = { ...current, onboarded: true }
+            const withStickers = { ...onboardedProfile, stickers: [...onboardedProfile.stickers, ...unlockNew(onboardedProfile)] }
+            updateCurrent(() => withStickers)
+            silentBackup(withStickers)
             goHome()
           }}
         />

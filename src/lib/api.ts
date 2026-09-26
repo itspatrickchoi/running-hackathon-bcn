@@ -104,3 +104,31 @@ export async function joinWaitlist(name: string, email: string, source: Waitlist
     throw new Error(body.error ?? 'Could not join the list.')
   }
 }
+
+export interface EncryptedBackupPayload {
+  ciphertext: string
+  iv: string
+  salt: string
+}
+
+export async function pushEncryptedBackup(codeHash: string, payload: EncryptedBackupPayload): Promise<void> {
+  const res = await fetch('/api/sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ codeHash, ...payload }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? 'Could not back up your data.')
+  }
+}
+
+export async function fetchEncryptedBackup(codeHash: string): Promise<EncryptedBackupPayload | null> {
+  const res = await fetch(`/api/sync/${codeHash}`)
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? 'Could not reach the backup service.')
+  }
+  const data = (await res.json()) as { found: boolean; backup: EncryptedBackupPayload | null }
+  return data.found ? data.backup : null
+}

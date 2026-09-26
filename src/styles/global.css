@@ -808,6 +808,42 @@ a {
   margin-top: 8px;
 }
 
+/* ---------- Restore & backup ---------- */
+
+.restore-block .card {
+  margin-top: 12px;
+}
+
+.code-input {
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.backup-block {
+  border-top: 1.5px dashed currentColor;
+  padding-top: 18px;
+  margin-top: 8px;
+}
+
+.code-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--bg-well);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+
+.code-display code {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+}
+
 /* ---------- Record ---------- */
 
 .record-card {
