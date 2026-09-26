@@ -7,6 +7,7 @@ import { ThemePicker } from './ThemePicker'
 import { XpBar } from './XpBar'
 import { Sticker } from './stickers/art'
 import { WaitlistForm } from './WaitlistForm'
+import { BackupControl } from './BackupControl'
 
 export type HomeView = 'home' | 'progress' | 'stickers'
 
@@ -129,6 +130,7 @@ export function Home({
             <ThemePicker value={profile.theme} onChange={(theme) => onUpdate({ theme })} />
             <p className="field-label">Judges</p>
             <PersonalityPicker assignments={profile.assignments} onChange={(assignments) => onUpdate({ assignments })} />
+            <BackupControl profile={profile} onUpdate={onUpdate} />
             <div className="footer-row">
               <button className="pill-button ghost" onClick={onRedoOnboarding}>
                 Redo the get-to-know-you

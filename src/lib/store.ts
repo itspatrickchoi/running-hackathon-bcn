@@ -1,5 +1,7 @@
 // Browser-only persistence: every profile on this device lives in one
-// localStorage entry. No server, no accounts — clearing site data resets it.
+// localStorage entry. No server-side database of what people said — the one
+// opt-in exception is the encrypted recovery-code backup below, and even
+// that is ciphertext the server never has the key to read.
 import { useCallback, useEffect, useState } from 'react'
 import {
   DEFAULT_ASSIGNMENTS,
@@ -9,6 +11,8 @@ import {
   type PersonalityId,
   type Verdict,
 } from '../../shared/domain'
+import { decryptProfile, encryptProfile, formatCode, generateCode, hashCode } from './crypto'
+import { fetchEncryptedBackup, pushEncryptedBackup } from './api'
 
 export type ThemeId = 'clean' | 'bubblegum' | 'arcade' | 'terminal'
 
@@ -38,6 +42,8 @@ export interface UserProfile {
   streak: { current: number; best: number; lastDate: string | null }
   checkIns: CheckIn[]
   stickers: string[]
+  /** Kept on this device only for convenience (so it can push updates silently); never sent to the server. */
+  syncCode?: string
 }
 
 interface StoreShape {
@@ -103,6 +109,58 @@ export function applyTheme(theme: ThemeId) {
   document.documentElement.dataset.theme = theme
 }
 
+function isUserProfile(value: unknown): value is UserProfile {
+  const p = value as Partial<UserProfile> | null
+  return (
+    !!p &&
+    typeof p === 'object' &&
+    typeof p.id === 'string' &&
+    typeof p.name === 'string' &&
+    Array.isArray(p.checkIns) &&
+    Array.isArray(p.stickers)
+  )
+}
+
+/**
+ * Encrypts and uploads a profile, generating a recovery code the first time.
+ * Returns the profile with `syncCode` set, so the caller can persist it and
+ * show the code to the user.
+ */
+export async function backupProfile(profile: UserProfile): Promise<UserProfile> {
+  const code = profile.syncCode ?? generateCode()
+  const payload = await encryptProfile(profile, code)
+  const codeHash = await hashCode(code)
+  await pushEncryptedBackup(codeHash, payload)
+  return profile.syncCode ? profile : { ...profile, syncCode: code }
+}
+
+/** Best-effort background push for a profile that already has backup turned on. Never throws. */
+export async function silentBackup(profile: UserProfile): Promise<void> {
+  if (!profile.syncCode) return
+  try {
+    await backupProfile(profile)
+  } catch {
+    // A failed background backup shouldn't interrupt the check-in flow.
+  }
+}
+
+/** Downloads and decrypts a backup by its recovery code. Throws with a user-facing message on any failure. */
+export async function restoreFromCode(code: string): Promise<UserProfile> {
+  const codeHash = await hashCode(code)
+  const payload = await fetchEncryptedBackup(codeHash)
+  if (!payload) throw new Error('No backup found for that code.')
+
+  let profile: unknown
+  try {
+    profile = await decryptProfile(payload, code)
+  } catch {
+    throw new Error('That code doesn’t match this backup.')
+  }
+  if (!isUserProfile(profile)) throw new Error('That backup looks corrupted.')
+
+  return { ...profile, syncCode: formatCode(code) }
+}
+
 export function useProfiles() {
   const [state, setState] = useState<StoreShape>(() => read())
 
@@ -146,6 +204,12 @@ export function useProfiles() {
     [commit],
   )
 
+  /** Adds a fully-formed profile (e.g. from restoreFromCode) to this device and signs in as it. */
+  const adoptProfile = useCallback(
+    (profile: UserProfile) => commit((prev) => ({ currentUserId: profile.id, users: { ...prev.users, [profile.id]: profile } })),
+    [commit],
+  )
+
   const signOut = useCallback(() => commit((prev) => ({ ...prev, currentUserId: null })), [commit])
 
   const removeUser = useCallback(
@@ -158,5 +222,5 @@ export function useProfiles() {
     [commit],
   )
 
-  return { current, users, signIn, updateCurrent, signOut, removeUser }
+  return { current, users, signIn, updateCurrent, adoptProfile, signOut, removeUser }
 }
